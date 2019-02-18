@@ -1,0 +1,2 @@
+- learn [vue](https://github.com/vuejs/vue) and imitate it
+- 学习 [vue](https://github.com/vuejs/vue), 仿照实现
