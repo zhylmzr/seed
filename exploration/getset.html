@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app">
+    <p>({{time}}) {{msg}}</p>
+    <input type="text" oninput="app.data.msg=event.target.value" sd-value="msg">
+    <p sd-text="msg"></p>
+  </div>
+
+  <script>
+    const PREFIX_MASK = 'sd'
+    const VAR_RE = /\{\{([^}]*)\}\}/g
+
+    let directives = {
+      value: (el, value) => {
+        return el.value = value || ''
+      },
+      text: (el, value) => {
+        return el.textContent = value || ''
+      }
+    }
+
+    function Element(id, init) {
+      let data = this.data = {}
+      let bindings = {}
+      let root = document.querySelector(id)
+      let content = root.outerHTML.replace(VAR_RE, (token, variable) => {
+        bindings[variable] = {}
+        return `<span ${PREFIX_MASK}=${variable}></span>`
+      })
+
+      root.innerHTML = content
+
+      initDirective()
+
+      for (let prop in bindings) {
+        bind(prop)
+      }
+
+      if (init) {
+        for (let prop in init) {
+          data[prop] = init[prop]
+        }
+      }
+
+
+      function bind(variable) {
+        bindings[variable].els = document.querySelectorAll(`[${PREFIX_MASK}=${variable}]`)
+
+        ;[].forEach.call(bindings[variable].els, el => {
+          el.removeAttribute(PREFIX_MASK)
+        })
+      
+        Object.defineProperty(data, variable, {
+          set: value => {
+            ;[].forEach.call(bindings[variable].els, el => {
+              bindings[variable].value = el.textContent = value
+              let directives = bindings[variable].directives
+              directives && directives.forEach(directive => {
+                directive.update(directive.el, value)
+              })
+            })
+          },
+          get: () => {
+            return bindings[variable].value
+          }
+        })
+      }
+
+      function initDirective() {
+        let selector = Object.keys(directives).map(prop => `[${PREFIX_MASK}-${prop}]`)
+        let els = root.querySelectorAll(selector)
+
+        ;[].forEach.call(els, el => {
+          [].forEach.call(el.attributes, attr => {
+            let directive = parseDirective(attr)
+            if (directive) {
+              bindDirective(el, directive)
+            }
+          })
+        })
+      }
+
+      function parseDirective(attr) {
+        if (attr.name.indexOf(PREFIX_MASK) !== 0) {
+          return
+        }
+        let dirName = attr.name.slice(PREFIX_MASK.length + 1)
+        let def = directives[dirName]
+        return def ? {
+          name: dirName,
+          def: directives[dirName],
+          key: attr.value,
+          update: typeof def === 'function' ? def : def.update
+        } : null
+      }
+
+      function bindDirective(el, directive) {
+        let key = directive.key
+        let binding = bindings[key]
+
+        if (!Object.keys(binding).length) {
+          bindings[key] = binding = {
+            value: undefined,
+            directives: []
+          }
+        }
+
+        directive.el = el
+        binding.directives.push(directive)
+      }
+    }
+
+    let app = new Element('#app', { time: '2019', msg: 'demo' })
+    app.data.msg = 'hello world'
+  </script>
+</body>
+</html>
