@@ -4,6 +4,9 @@ module.exports = {
   devtool: 'inline-source-map',
   entry: "./src/index.ts",
   output: {
+    library: 'Seed',
+    libraryTarget: 'window',
+    libraryExport: 'default',
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js'
   },
