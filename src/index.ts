@@ -1,9 +1,9 @@
 import { Directive, PREFIX_MASK, VAR_RE } from "./directive";
 import Directives from "./directives";
-import { forEach } from "./utils";
+import { forEach, map } from "./utils";
 
 interface BindingType {
-  els: NodeListOf<HTMLElement>;
+  els: NodeListOf<HTMLElement>; // 语法糖绑定元素
   value: object;
   directives: Directive[];
 }
@@ -52,8 +52,19 @@ class Seed {
     );
     const els = this.root.querySelectorAll(selector.join());
     forEach.call(els, (el: HTMLElement) => {
-      forEach.call(el.attributes, (attr: Attr) => {
-        let directive = Directive.parser(attr);
+      // attributes 副本, 绑定指令时移除属性会导致原 attributes 变更导致循环次数出错
+      let attrs: AttrType[] = map.call(
+        el.attributes,
+        (attr: Attr): AttrType => {
+          return {
+            name: attr.name,
+            value: attr.value,
+          };
+        },
+      );
+
+      attrs.forEach(attr => {
+        let directive = Directive.parser(this, attr);
         if (directive) {
           this.bindDirective(el, directive);
         }
@@ -96,20 +107,21 @@ class Seed {
 
     Object.defineProperty(this.data, variable, {
       set: (value: ValueType) => {
+        this.binding[variable].value = value as object;
+
         // loop all bound element
         forEach.call(this.binding[variable].els, (el: HTMLElement) => {
-          this.binding[variable].value = value as object;
           el.textContent = value as string;
-
-          // fire directive to update view
-          forEach.call(
-            this.binding[variable].directives || [],
-            (dir: Directive) => {
-              let tempValue = dir.opts.filters ? dir.applyFilter(value) : value;
-              dir.update(tempValue);
-            },
-          );
         });
+
+        // fire directive to update view
+        forEach.call(
+          this.binding[variable].directives || [],
+          (dir: Directive) => {
+            let tempValue = dir.opts.filters ? dir.applyFilter(value) : value;
+            dir.update(tempValue);
+          },
+        );
       },
       get: () => {
         return this.binding[variable].value;

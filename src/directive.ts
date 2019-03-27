@@ -2,15 +2,7 @@ const PREFIX_MASK = "sd";
 const VAR_RE = /\{\{([^}]*)\}\}/g;
 import Directives from "./directives";
 import Filters from "./filters";
-
-interface FilterType {
-  (arg: ValueType): ValueType;
-}
-
-interface UpdateType {
-  update: Function;
-  customFilter?: FilterType;
-}
+import Seed from ".";
 
 function isFilterType(obj: Function | UpdateType): obj is UpdateType {
   return (obj as UpdateType).update !== undefined;
@@ -19,21 +11,26 @@ function isFilterType(obj: Function | UpdateType): obj is UpdateType {
 interface DirectiveOptions {
   readonly attr: { name: string; value: string };
   readonly name: string;
+  readonly arg: string;
   readonly key: string;
   readonly def: Function | UpdateType;
   readonly filters: string[];
+  handlers: Record<string, EventListener>;
 }
 
 class Directive {
   private el: HTMLElement;
 
-  public constructor(public readonly opts: DirectiveOptions) {}
+  public constructor(
+    public readonly seed: Seed,
+    public readonly opts: DirectiveOptions,
+  ) {}
 
   public update(value: ValueType): void {
     if (typeof this.opts.def === "function") {
       this.opts.def(this.el, value);
     } else {
-      this.opts.def.update(this.el, value);
+      this.opts.def.update.call(this, value);
     }
   }
 
@@ -41,11 +38,15 @@ class Directive {
     this.el = el;
   }
 
-  public static parser(attr: Attr): Directive {
+  public getEl(): HTMLElement {
+    return this.el;
+  }
+
+  public static parser(seed: Seed, attr: AttrType): Directive {
     if (attr.name.indexOf(PREFIX_MASK) !== 0) {
       return null;
     }
-    let dirName = attr.name.slice(PREFIX_MASK.length + 1);
+    let noprefix = attr.name.slice(PREFIX_MASK.length + 1);
     let express = attr.value;
     let pipeIndex = express.indexOf("|");
     let key =
@@ -59,13 +60,20 @@ class Directive {
             .map(filter => {
               return filter.trim();
             });
-    if (Directives[dirName]) {
-      return new Directive({
-        attr,
+    let argIndex = noprefix.indexOf("-");
+    let arg = argIndex === -1 ? null : noprefix.slice(argIndex + 1);
+    let name = arg ? noprefix.slice(0, argIndex) : noprefix;
+    let def = Directives[name];
+
+    if (def && key) {
+      return new Directive(seed, {
+        name,
+        arg,
         key,
+        attr,
         filters,
-        name: dirName,
-        def: Directives[dirName],
+        def,
+        handlers: {},
       });
     }
 
