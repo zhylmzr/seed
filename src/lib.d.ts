@@ -1,12 +1,11 @@
 type ValueType = object | string | number | boolean | Function;
 
 interface FilterType {
-    (arg: ValueType): ValueType;
+    (...args: ValueType[]): ValueType;
 }
 
 interface UpdateType {
     update: Function;
-    customFilter?: FilterType;
 }
 
 interface AttrType {

@@ -9,23 +9,29 @@
   <body>
     <div id="app">
       <p>{{ msg }}</p>
-      <p sd-text="msg | capitalize"></p>
+      <p sd-text="msg | capitalize | miss"></p>
       <p sd-text="tip" sd-on-click="handleClick"></p>
       <input type="text" sd-value="msg" sd-on-input="handleInput" />
+      <p sd-text="total | money"></p>
     </div>
     <script src="./dist/index.js"></script>
 
     <script>
-      let app = new Seed("#app", {
-        msg: "hello world",
-        tip: "click me",
+      Seed.filter('money', (value, param) => {
+        return '$' + value.toFixed(2)
+      })
+
+      let app = new Seed('#app', {
+        total: 100,
+        msg: 'hello world',
+        tip: 'click me',
         handleClick: function(evt) {
-          this.data.msg += "!";
+          this.data.msg += '!'
         },
         handleInput: function(evt) {
-          this.data.msg = evt.target.value;
-        },
-      });
+          this.data.msg = evt.target.value
+        }
+      })
     </script>
   </body>
 </html>

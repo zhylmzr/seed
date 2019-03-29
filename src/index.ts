@@ -1,6 +1,7 @@
 import { Directive, PREFIX_MASK, VAR_RE } from "./directive";
 import Directives from "./directives";
 import { forEach, map } from "./utils";
+import Filter from './filters'
 
 interface BindingType {
     els: NodeListOf<HTMLElement>; // 语法糖绑定元素
@@ -127,6 +128,10 @@ class Seed {
                 return this.binding[variable].value;
             },
         });
+    }
+
+    public static filter(name: string, func: FilterType): void {
+        Filter[name] = func
     }
 }
 

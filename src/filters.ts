@@ -1,5 +1,5 @@
 const filters: {
-    [key: string]: Function;
+    [key: string]: FilterType;
 } = {
     capitalize: (value: ValueType): ValueType => {
         if (typeof value === "string") {

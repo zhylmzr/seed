@@ -1,12 +1,13 @@
 const PREFIX_MASK = "sd";
 const VAR_RE = /\{\{([^}]*)\}\}/g;
+const KEY_RE = /^[^\|]+/;
+const FILTER__RE = /[^\|]+/g;
+const FILTER_ARG_RE = /[^\s]+/g;
+
 import Directives from "./directives";
 import Filters from "./filters";
 import Seed from ".";
-
-function isFilterType(obj: Function | UpdateType): obj is UpdateType {
-    return (obj as UpdateType).update !== undefined;
-}
+import Filter from "./filter";
 
 interface DirectiveOptions {
     readonly attr: { name: string; value: string };
@@ -14,7 +15,7 @@ interface DirectiveOptions {
     readonly arg: string;
     readonly key: string;
     readonly def: Function | UpdateType;
-    readonly filters: string[];
+    readonly filters: Filter[];
     handlers: Record<string, EventListener>;
 }
 
@@ -47,19 +48,14 @@ class Directive {
             return null;
         }
         let noprefix = attr.name.slice(PREFIX_MASK.length + 1);
-        let express = attr.value;
-        let pipeIndex = express.indexOf("|");
-        let key =
-      pipeIndex === -1 ? express.trim() : express.slice(0, pipeIndex).trim();
-        let filters =
-      pipeIndex === -1
-          ? null
-          : express
-              .slice(pipeIndex + 1)
-              .split("|")
-              .map(filter => {
-                  return filter.trim();
-              });
+        let key = attr.value.match(KEY_RE)[0].trim()
+        let params = attr.value.match(FILTER__RE)
+        let filters = params && params.slice(1).map(filter => {
+            let tokens = filter.match(FILTER_ARG_RE)
+            let name = tokens[0]
+            return new Filter(name, Filters[name] as FilterType, tokens.length > 1 ? tokens.slice(1) : null)
+        })
+
         let argIndex = noprefix.indexOf("-");
         let arg = argIndex === -1 ? null : noprefix.slice(argIndex + 1);
         let name = arg ? noprefix.slice(0, argIndex) : noprefix;
@@ -81,16 +77,10 @@ class Directive {
     }
 
     public applyFilter(value: ValueType): ValueType {
-        if (isFilterType(this.opts.def) && this.opts.def.customFilter) {
-            return this.opts.def.customFilter(value);
-        } else {
-            this.opts.filters.forEach((name: string) => {
-                if (Filters[name]) {
-                    value = Filters[name](value);
-                }
-            });
-            return value;
-        }
+        this.opts.filters.forEach((filter: Filter) => {
+            value = filter.apply(value)
+        });
+        return value;
     }
 }
 
