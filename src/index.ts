@@ -12,7 +12,7 @@ interface BindingType {
 class Seed {
     private root: HTMLElement;
 
-    private data: {
+    private scope: {
         [prop: string]: object;
     };
     private binding: Record<string, BindingType>;
@@ -23,7 +23,7 @@ class Seed {
         }
         this.initProp();
         this.root = document.querySelector(id);
-        const content = this.root.outerHTML.replace(
+        const content = this.root.innerHTML.replace(
             VAR_RE,
             (_: string, variable: string): string => {
                 return this.makeToken(variable);
@@ -39,12 +39,12 @@ class Seed {
     }
 
     private initProp(): void {
-        this.data = {};
+        this.scope = {};
         this.binding = {};
     }
 
     private makeToken(variable: string): string {
-        return `<span ${PREFIX_MASK}=${variable}></span>`;
+        return `<span ${PREFIX_MASK}-text='${variable}'></span>`;
     }
 
     private initDirective(): void {
@@ -93,7 +93,7 @@ class Seed {
         }
         if (initData) {
             for (const variable in initData) {
-                this.data[variable] = initData[variable];
+                this.scope[variable] = initData[variable];
             }
         }
     }
@@ -106,7 +106,7 @@ class Seed {
             el.removeAttribute(PREFIX_MASK);
         });
 
-        Object.defineProperty(this.data, variable, {
+        Object.defineProperty(this.scope, variable, {
             set: (value: ValueType) => {
                 this.binding[variable].value = value as object;
 
@@ -132,6 +132,14 @@ class Seed {
 
     public static filter(name: string, func: FilterType): void {
         Filter[name] = func
+    }
+
+    public static extend(Opts: Record<string, object>): typeof Seed {
+        return class SeedChild extends Seed {
+            constructor(id: string, initData: Record<string, object>) {
+                super(id, {...Opts, ...initData});
+            }
+        }
     }
 }
 

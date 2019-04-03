@@ -9,10 +9,13 @@
   <body>
     <div id="app">
       <p>{{ msg }}</p>
-      <p sd-text="msg | capitalize | miss"></p>
+      <p sd-text="msg | capitalize"></p>
       <p sd-text="tip" sd-on-click="handleClick"></p>
       <input type="text" sd-value="msg" sd-on-input="handleInput" />
       <p sd-text="total | money"></p>
+    </div>
+    <div id="app2">
+      <p>{{ msg }}</p>
     </div>
     <script src="./dist/index.js"></script>
 
@@ -21,17 +24,22 @@
         return '$' + value.toFixed(2)
       })
 
-      let app = new Seed('#app', {
+      let Todo = Seed.extend({
         total: 100,
         msg: 'hello world',
         tip: 'click me',
+      })
+
+      let app = new Todo('#app', {
         handleClick: function(evt) {
-          this.data.msg += '!'
+          this.scope.msg += '!'
         },
         handleInput: function(evt) {
-          this.data.msg = evt.target.value
+          this.scope.msg = evt.target.value
         }
       })
+
+      let app2 = new Todo('#app2')
     </script>
   </body>
 </html>
