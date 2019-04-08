@@ -1,4 +1,4 @@
-import { Directive } from "./directive";
+import Directive from "./index";
 
 const directices: {
     [key: string]: Function | UpdateType;
@@ -8,6 +8,9 @@ const directices: {
     },
     value: (el: HTMLDataElement, value: string): void => {
         el.value = value;
+    },
+    show: (el: HTMLElement, value: boolean): void => {
+        el.style.display = value ? '' : 'none';
     },
     on: {
         update(this: Directive, handler: EventListener): void {

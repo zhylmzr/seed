@@ -1,7 +1,9 @@
-import { Directive, PREFIX_MASK, VAR_RE } from "./directive";
-import Directives from "./directives";
-import { forEach, map } from "./utils";
-import Filter from './filters'
+import { PREFIX_MASK, VAR_RE } from "./config";
+import Directive from "./directive/index";
+import Filter from './filter/index';
+
+const forEach = Array.prototype.forEach;
+const map = Array.prototype.map;
 
 interface BindingType {
     els: NodeListOf<HTMLElement>; // 语法糖绑定元素
@@ -21,7 +23,8 @@ class Seed {
         if (!(this instanceof Seed)) {
             throw new Error("please use new keyword");
         }
-        this.initProp();
+        this.scope = {};
+        this.binding = {};
         this.root = document.querySelector(id);
         const content = this.root.innerHTML.replace(
             VAR_RE,
@@ -31,46 +34,40 @@ class Seed {
         );
         this.root.innerHTML = content;
 
-        // init directive and binding
-        this.initDirective();
+        // process node and directives
+        this.compileNode(this.root);
 
         // two-way data binding
         this.initData(initData);
-    }
-
-    private initProp(): void {
-        this.scope = {};
-        this.binding = {};
     }
 
     private makeToken(variable: string): string {
         return `<span ${PREFIX_MASK}-text='${variable}'></span>`;
     }
 
-    private initDirective(): void {
-        const selector = Object.keys(Directives).map(
-            (dir: string) => `[${PREFIX_MASK}-${dir}]`,
-        );
-        const els = this.root.querySelectorAll(selector.join());
-        forEach.call(els, (el: HTMLElement) => {
-            // attributes 副本, 绑定指令时移除属性会导致原 attributes 变更导致循环次数出错
-            let attrs: AttrType[] = map.call(
-                el.attributes,
-                (attr: Attr): AttrType => {
-                    return {
-                        name: attr.name,
-                        value: attr.value,
-                    };
-                },
-            );
-
-            attrs.forEach(attr => {
-                let directive = Directive.parser(this, attr);
+    private compileNode(node: HTMLElement): void {
+        if (node.nodeType === 3) { // text node
+            this.compileTextNode(node);
+        } else if (node.attributes && node.attributes.length) {
+            let attrs: AttrType[] = map.call(node.attributes, (attr: Attr) => {
+                return { name: attr.name, value: attr.value };
+            })
+            attrs.forEach((attr: Attr) => {
+                let directive = Directive.parse(this, attr);
                 if (directive) {
-                    this.bindDirective(el, directive);
+                    this.bindDirective(node, directive);
                 }
-            });
-        });
+            })
+        }
+        if (node.children.length) {
+            forEach.call(node.children, (child: HTMLElement) => {
+                this.compileNode(child)
+            })
+        }
+    }
+
+    private compileTextNode(node: HTMLElement): void {
+
     }
 
     private bindDirective(el: HTMLElement, dir: Directive): void {
@@ -87,14 +84,10 @@ class Seed {
         binding.directives.push(dir);
     }
 
-    private initData(initData: Record<string, object>): void {
+    private initData(initData: Record<string, object> = {}): void {
         for (const variable in this.binding) {
             this.bindData(variable);
-        }
-        if (initData) {
-            for (const variable in initData) {
-                this.scope[variable] = initData[variable];
-            }
+            this.scope[variable] = initData[variable];
         }
     }
 
@@ -131,7 +124,7 @@ class Seed {
     }
 
     public static filter(name: string, func: FilterType): void {
-        Filter[name] = func
+        Filter.add(name, func);
     }
 
     public static extend(Opts: Record<string, object>): typeof Seed {
