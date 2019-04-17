@@ -14,7 +14,8 @@ interface DirectiveOptions {
 }
 
 class Directive {
-    private el: HTMLElement;
+    public el: HTMLElement;
+    public childSeed: Seed[];
 
     public constructor(
         public readonly seed: Seed,
@@ -27,14 +28,6 @@ class Directive {
         } else {
             this.opts.def.update.call(this, value);
         }
-    }
-
-    public setEl(el: HTMLElement): void {
-        this.el = el;
-    }
-
-    public getEl(): HTMLElement {
-        return this.el;
     }
 
     public static parse(seed: Seed, attr: AttrType): Directive {

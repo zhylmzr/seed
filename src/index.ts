@@ -6,7 +6,6 @@ const forEach = Array.prototype.forEach;
 const map = Array.prototype.map;
 
 interface BindingType {
-    els: NodeListOf<HTMLElement>; // 语法糖绑定元素
     value: object;
     directives: Directive[];
 }
@@ -37,11 +36,12 @@ class Seed {
         // process node and directives
         this.compileNode(this.root);
 
-        // two-way data binding
+        // init data by setter
         this.initData(initData);
     }
 
     private makeToken(variable: string): string {
+        // 语法糖转换为指令
         return `<span ${PREFIX_MASK}-text='${variable}'></span>`;
     }
 
@@ -55,13 +55,13 @@ class Seed {
             attrs.forEach((attr: Attr) => {
                 let directive = Directive.parse(this, attr);
                 if (directive) {
-                    this.bindDirective(node, directive);
+                    this.bind(node, directive);
                 }
             })
         }
         if (node.children.length) {
             forEach.call(node.children, (child: HTMLElement) => {
-                this.compileNode(child)
+                this.compileNode(child);
             })
         }
     }
@@ -70,47 +70,40 @@ class Seed {
 
     }
 
-    private bindDirective(el: HTMLElement, dir: Directive): void {
-        let binding = this.binding[dir.opts.key];
-        if (!binding || !Object.keys(binding).length) {
-            this.binding[dir.opts.key] = binding = {
-                els: undefined,
-                value: undefined,
-                directives: [],
-            };
-        }
+    private bind(el: HTMLElement, dir: Directive): void {
         el.removeAttribute(dir.opts.attr.name);
-        dir.setEl(el);
+        dir.el = el;
+
+        let binding = this.binding[dir.opts.key] || this.createBinding(dir.opts.key);
         binding.directives.push(dir);
+
+        let def = dir.opts.def as UpdateType;
+        // invoke hook
+        if (def.created) {
+            def.created.call(dir, binding.value);
+        }
     }
 
     private initData(initData: Record<string, object> = {}): void {
         for (const variable in this.binding) {
-            this.bindData(variable);
             this.scope[variable] = initData[variable];
         }
     }
 
-    private bindData(variable: string): void {
-        this.binding[variable].els = document.querySelectorAll(
-            `[${PREFIX_MASK}=${variable}]`,
-        );
-        forEach.call(this.binding[variable].els, (el: HTMLElement) => {
-            el.removeAttribute(PREFIX_MASK);
-        });
+    private createBinding(variable: string): BindingType {
+        let binding: BindingType = {
+            value: undefined,
+            directives: [],
+        }
+        this.binding[variable] = binding;
 
         Object.defineProperty(this.scope, variable, {
             set: (value: ValueType) => {
-                this.binding[variable].value = value as object;
-
-                // loop all bound element
-                forEach.call(this.binding[variable].els, (el: HTMLElement) => {
-                    el.textContent = value as string;
-                });
+                binding.value = value as object;
 
                 // fire directive to update view
                 forEach.call(
-                    this.binding[variable].directives || [],
+                    binding.directives,
                     (dir: Directive) => {
                         let tempValue = dir.opts.filters ? dir.applyFilter(value) : value;
                         dir.update(tempValue);
@@ -118,9 +111,10 @@ class Seed {
                 );
             },
             get: () => {
-                return this.binding[variable].value;
+                return binding.value;
             },
         });
+        return binding;
     }
 
     public static filter(name: string, func: FilterType): void {

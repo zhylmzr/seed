@@ -6,6 +6,7 @@ interface FilterType {
 
 interface UpdateType {
     update: Function;
+    created?: Function;
 }
 
 interface AttrType {

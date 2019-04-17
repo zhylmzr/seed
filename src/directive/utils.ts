@@ -16,14 +16,24 @@ const directices: {
         update(this: Directive, handler: EventListener): void {
             let event = this.opts.arg;
             if (this.opts.handlers[event]) {
-                this.getEl().removeEventListener(event, this.opts.handlers[event]);
+                this.el.removeEventListener(event, this.opts.handlers[event]);
             }
             if (handler) {
                 handler = handler.bind(this.seed);
-                this.getEl().addEventListener(event, handler);
+                this.el.addEventListener(event, handler);
                 this.opts.handlers[event] = handler;
             }
             return;
+        },
+    },
+    each: {
+        created(this: Directive) {
+            let el = this.el as object as { [prop:string]: boolean };
+            el['sd-block'] = true;
+            console.log(this.opts.arg);
+        },
+        update(this: Directive, collection: Record<string, object>) {
+
         },
     },
 };
