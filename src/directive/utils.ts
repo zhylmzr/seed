@@ -28,12 +28,13 @@ const directices: {
     },
     each: {
         created(this: Directive) {
-            let el = this.el as object as { [prop:string]: boolean };
+            let el = this.el as object as { [prop: string]: boolean };
             el['sd-block'] = true;
             console.log(this.opts.arg);
         },
         update(this: Directive, collection: Record<string, object>) {
-
+            // TODO
+            console.log(collection);
         },
     },
 };

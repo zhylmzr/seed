@@ -1,4 +1,4 @@
-import { PREFIX_MASK, KEY_RE, FILTER__RE, FILTER_ARG_RE } from '../config'
+import { PREFIX_MASK, KEY_RE, FILTER__RE, FILTER_ARG_RE } from '../config';
 import Seed from "../index";
 import Utils from "./utils";
 import Filter from "../filter";
@@ -41,7 +41,7 @@ class Directive {
             let tokens = filter.match(FILTER_ARG_RE);
             let name = tokens[0];
             return new Filter(name, tokens.length > 1 ? tokens.slice(1) : null);
-        })
+        });
 
         let argIndex = noprefix.indexOf("-");
         let arg = argIndex === -1 ? null : noprefix.slice(argIndex + 1);

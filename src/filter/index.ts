@@ -17,7 +17,7 @@ export default class Filter {
         }
     }
 
-    public static add(name: string, filter: FilterType) {
+    public static add(name: string, filter: FilterType): void {
         Utils[name] = filter;
     }
 }

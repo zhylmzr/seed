@@ -51,23 +51,24 @@ class Seed {
         } else if (node.attributes && node.attributes.length) {
             let attrs: AttrType[] = map.call(node.attributes, (attr: Attr) => {
                 return { name: attr.name, value: attr.value };
-            })
+            });
             attrs.forEach((attr: Attr) => {
                 let directive = Directive.parse(this, attr);
                 if (directive) {
                     this.bind(node, directive);
                 }
-            })
+            });
         }
         if (node.children.length) {
             forEach.call(node.children, (child: HTMLElement) => {
                 this.compileNode(child);
-            })
+            });
         }
     }
 
     private compileTextNode(node: HTMLElement): void {
-
+        // TODO
+        console.log(node);
     }
 
     private bind(el: HTMLElement, dir: Directive): void {
@@ -94,7 +95,7 @@ class Seed {
         let binding: BindingType = {
             value: undefined,
             directives: [],
-        }
+        };
         this.binding[variable] = binding;
 
         Object.defineProperty(this.scope, variable, {
@@ -123,10 +124,10 @@ class Seed {
 
     public static extend(Opts: Record<string, object>): typeof Seed {
         return class SeedChild extends Seed {
-            constructor(id: string, initData: Record<string, object>) {
+            public constructor(id: string, initData: Record<string, object>) {
                 super(id, {...Opts, ...initData});
             }
-        }
+        };
     }
 }
 
