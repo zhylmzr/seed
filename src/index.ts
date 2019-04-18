@@ -13,18 +13,23 @@ interface BindingType {
 class Seed {
     private root: HTMLElement;
 
-    private scope: {
-        [prop: string]: object;
-    };
+    public scope: IndexObject;
     private binding: Record<string, BindingType>;
+    private options: Record<string, object>;
 
-    public constructor(id: string, initData: Record<string, object>) {
+    public constructor(el: string | HTMLElement, initData: Record<string, object>, options: Record<string, object> = {}) {
         if (!(this instanceof Seed)) {
             throw new Error("please use new keyword");
         }
         this.scope = {};
         this.binding = {};
-        this.root = document.querySelector(id);
+        this.options = options;
+        if (typeof el === 'string') {
+            this.root = document.querySelector(el);
+        } else {
+            this.root = el;
+        }
+
         const content = this.root.innerHTML.replace(
             VAR_RE,
             (_: string, variable: string): string => {
@@ -53,13 +58,14 @@ class Seed {
                 return { name: attr.name, value: attr.value };
             });
             attrs.forEach((attr: Attr) => {
-                let directive = Directive.parse(this, attr);
+                let directive = Directive.parse(this, attr, this.options as object as DirectiveParseOption);
                 if (directive) {
                     this.bind(node, directive);
                 }
             });
         }
-        if (node.children.length) {
+        let el = node as object as IndexBoolean;
+        if (!el['sd-block'] && node.children.length) {
             forEach.call(node.children, (child: HTMLElement) => {
                 this.compileNode(child);
             });

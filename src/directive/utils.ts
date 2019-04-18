@@ -1,4 +1,6 @@
 import Directive from "./index";
+import Seed from "..";
+import watchArray from '../watchArray';
 
 const directices: {
     [key: string]: Function | UpdateType;
@@ -28,13 +30,30 @@ const directices: {
     },
     each: {
         created(this: Directive) {
-            let el = this.el as object as { [prop: string]: boolean };
+            let el = this.el as object as IndexBoolean;
             el['sd-block'] = true;
-            console.log(this.opts.arg);
+            this.container = this.el.parentElement;
+            this.container.removeChild(this.el);
         },
-        update(this: Directive, collection: Record<string, object>) {
+        update(this: Directive, collection: object[]) {
+            collection.forEach((item: Record<string, object>, i) => {
+                (this.opts.def as UpdateType).buildItem.bind(this)(item, i, collection);
+            });
+            watchArray(collection as object as Record<string, Function>, (this.opts.def as UpdateType).mutate.bind(this));
+        },
+        buildItem(this: Directive, data: Record<string, object>, index: number, collection: object[]): Seed {
+            let node = this.el.cloneNode(true) as HTMLElement;
+            let options: DirectiveParseOption = {
+                prefix: `^${this.opts.arg}\\.`,
+            };
+            let childSeed = new Seed(node, data, options as object as Record<string, object>);
+            this.container.appendChild(node);
+            collection[index] = childSeed.scope;
+            return childSeed;
+        },
+        mutate(mutation: Record<string, object>) {
             // TODO
-            console.log(collection);
+            console.log(mutation);
         },
     },
 };

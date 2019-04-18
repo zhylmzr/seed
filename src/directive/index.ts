@@ -16,6 +16,7 @@ interface DirectiveOptions {
 class Directive {
     public el: HTMLElement;
     public childSeed: Seed[];
+    public container: HTMLElement;
 
     public constructor(
         public readonly seed: Seed,
@@ -30,12 +31,16 @@ class Directive {
         }
     }
 
-    public static parse(seed: Seed, attr: AttrType): Directive {
+    public static parse(seed: Seed, attr: AttrType, options: DirectiveParseOption): Directive {
         if (attr.name.indexOf(PREFIX_MASK) !== 0) {
             return null;
         }
         let noprefix = attr.name.slice(PREFIX_MASK.length + 1);
         let key = attr.value.match(KEY_RE)[0].trim();
+
+        if (options.prefix) {
+            key = key.replace(new RegExp(options.prefix), '');
+        }
         let params = attr.value.match(FILTER__RE);
         let filters = params && params.slice(1).map(filter => {
             let tokens = filter.match(FILTER_ARG_RE);
