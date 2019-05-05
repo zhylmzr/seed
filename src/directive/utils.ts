@@ -1,5 +1,5 @@
 import Directive from "./index";
-import Seed from "..";
+import Seed from "../index";
 import watchArray from '../watchArray';
 
 const directices: {
