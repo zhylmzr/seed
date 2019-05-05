@@ -5,17 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Document</title>
+    <style>
+    .finish {
+      text-decoration: line-through;
+    }
+    </style>
   </head>
   <body>
     <div id="app">
       <p>{{ msg }}</p>
       <p sd-text="msg | capitalize"></p>
-      <p sd-text="tip" sd-on-click="handleClick"></p>
-      <input type="text" sd-value="msg" sd-on-input="handleInput" />
+      <p sd-text="tip" sd-on="click:handleClick"></p>
+      <input type="text" sd-value="msg" sd-on="input:handleInput" />
       <p sd-text="total | money"></p>
-      <ul sd-show="todos">
-        <li sd-each-todo="todos">
-          <span sd-text="todo.title"></span>
+      <ul>
+        <li
+          sd-controller="Todo"
+          sd-each="todo:todos"
+          sd-on="click:printLog, click:todo.toggle"
+          sd-text="todo.title"
+          sd-class="finish:todo.done"
+        >
         </li>
       </ul>
     </div>
@@ -26,25 +36,39 @@
         return '$' + value.toFixed(2)
       })
 
+      Seed.controller('Todo', (scope, self) => {
+        scope.toggle = function() {
+          scope.title += ' fuck'
+          scope.done = !scope.done
+        }
+      })
+
+      let s = new Date()
       let app = new Seed('#app', {
         total: 100,
         msg: 'hello world',
         tip: 'click me',
         handleClick: function(evt) {
           this.scope.msg += '!'
-          this.scope.todos[parseInt(Math.random() * this.scope.todos.length)].title += '.'
         },
         handleInput: function(evt) {
           this.scope.msg = evt.target.value
         },
+        printLog: function() {
+          console.log(1)
+        },
         todos: [{
-          title: 'hello'
+          title: 'hello',
+          done: true,
         }, {
-          title: 'WoW'
+          title: 'WoW',
+          done: false,
         }, {
-          title: 'test'
+          title: 'test',
+          done: false,
         }]
       })
+      console.log(Date.now() - s + 'ms')
     </script>
   </body>
 </html>

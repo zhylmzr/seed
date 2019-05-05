@@ -5,14 +5,17 @@ import watchArray from '../watchArray';
 const directices: {
     [key: string]: Function | UpdateType;
 } = {
-    text: (el: HTMLDataElement, value: string): void => {
-        el.textContent = value;
+    text(this: Directive, value: string): void {
+        this.el.textContent = value;
     },
-    value: (el: HTMLDataElement, value: string): void => {
-        el.value = value;
+    value(this: Directive, value: string): void {
+        (this.el as HTMLDataElement).value = value;
     },
-    show: (el: HTMLElement, value: boolean): void => {
-        el.style.display = value ? '' : 'none';
+    show(this: Directive, value: boolean): void {
+        this.el.style.display = value ? '' : 'none';
+    },
+    class(this: Directive, value: string): void {
+        this.el.classList[value ? 'add' : 'remove'](this.opts.arg);
     },
     on: {
         update(this: Directive, handler: EventListener): void {
@@ -43,10 +46,11 @@ const directices: {
         },
         buildItem(this: Directive, data: Record<string, object>, index: number, collection: object[]): Seed {
             let node = this.el.cloneNode(true) as HTMLElement;
-            let options: DirectiveParseOption = {
-                prefix: `^${this.opts.arg}\\.`,
+            let options: SeedOption = {
+                prefix: new RegExp(`^${this.opts.arg}\\.`),
+                parent: this.seed,
             };
-            let childSeed = new Seed(node, data, options as object as Record<string, object>);
+            let childSeed = new Seed(node, data, options);
             this.container.appendChild(node);
             collection[index] = childSeed.scope;
             return childSeed;

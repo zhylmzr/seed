@@ -27,7 +27,7 @@ interface AttrType {
     name: string;
     value: string;
 }
-
-interface DirectiveParseOption {
-    prefix: string;
+interface SeedOption {
+    prefix?: RegExp;
+    parent?: import('./index').default;
 }
