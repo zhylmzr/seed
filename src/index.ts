@@ -55,7 +55,7 @@ class Seed {
 
         // copy method from controller
         if (controller) {
-            controller.call(null, this.scope, this);
+            controller.call(this, this.scope, this);
         }
 
         // init data by setter
@@ -72,7 +72,7 @@ class Seed {
     private compileNode(node: HTMLElement, root?: boolean): void {
         if (node.nodeType === 3) { // text node
             this.compileTextNode(node);
-        } else if (node.attributes && node.attributes.length) {
+        } else {
             let eachExp = node.getAttribute(EACH_ATTR),
                 ctrlExp = node.getAttribute(CTRL_ATTR);
 
@@ -88,7 +88,7 @@ class Seed {
                     this.scope[directive.opts.key] = this._initCopy[directive.opts.key];
                     delete this._initCopy[directive.opts.key];
                 }
-            } else if (!ctrlExp || root) {
+            } else if (!ctrlExp || root) { // normal node
                 let attrs: AttrType[] = map.call(node.attributes, (attr: Attr) => {
                     return { name: attr.name, value: attr.value };
                 });
@@ -100,12 +100,16 @@ class Seed {
                         }
                     });
                 });
+            } else if (ctrlExp || !root) { // nested controller
+                // TODO
             }
-        }
-        if (node.childNodes.length) {
-            forEach.call(node.childNodes, (child: HTMLElement) => {
-                this.compileNode(child);
-            });
+
+            // avoid repeat compile children
+            if (!eachExp && !ctrlExp && node.childNodes.length) {
+                forEach.call(node.childNodes, (child: HTMLElement) => {
+                    this.compileNode(child);
+                });
+            }
         }
     }
 
