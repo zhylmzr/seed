@@ -22,6 +22,10 @@
     #app.completed .todo:not(.done) {
       display: none;
     }
+
+    .text {
+      color: gray;
+    }
     </style>
   </head>
   <body>
@@ -36,7 +40,7 @@
           <a sd-on="click:removeTodo">X</a>
         </li>
       </ul>
-      <div id="footer">
+      <div id="footer" sd-class="cls">
         Remaining: <span sd-text="remaining"></span><br>
         <a class="all" sd-on="click:filter">Show All</a> |
         <a class="remaining" sd-on="click:filter">Show Remaining</a> |
@@ -74,9 +78,10 @@
         title: 'test',
         done: false,
       }]
-      
+
       let s = new Date()
       let app = new Seed('#app', {
+        cls: 'text',
         remaining: todos.reduce((count, todo) => {
           return count + (todo.done ? 0 : 1)
         }, 0),

@@ -15,7 +15,14 @@ const directices: {
         this.el.style.display = value ? '' : 'none';
     },
     class(this: Directive, value: string): void {
-        this.el.classList[value ? 'add' : 'remove'](this.opts.arg);
+        if (this.opts.arg) { // 参数式
+            this.el.classList[value ? 'add' : 'remove'](this.opts.arg);
+        } else { // 直接量
+            let stoage = (this.el as object as IndexValue);
+            this.el.classList.remove(stoage.lastVal as string);
+            this.el.classList.add(value);
+            stoage.lastVal = value;
+        }
     },
     on: {
         update(this: Directive, handler: EventHandler): void {
