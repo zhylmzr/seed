@@ -18,17 +18,30 @@ const directices: {
         this.el.classList[value ? 'add' : 'remove'](this.opts.arg);
     },
     on: {
-        update(this: Directive, handler: EventListener): void {
+        update(this: Directive, handler: EventHandler): void {
             let event = this.opts.arg;
             if (this.opts.handlers[event]) {
                 this.el.removeEventListener(event, this.opts.handlers[event]);
             }
             if (handler) {
                 handler = handler.bind(this.seed);
-                this.el.addEventListener(event, handler);
-                this.opts.handlers[event] = handler;
+                let proxy = (e: Event): void => {
+                    handler({
+                        el: e.currentTarget,
+                        event: e,
+                        directive: this,
+                        seed: this.seed,
+                    });
+                };
+                this.el.addEventListener(event, proxy);
+                this.opts.handlers[event] = proxy;
             }
-            return;
+        },
+        destory(this: Directive) {
+            let event = this.opts.arg;
+            if (this.opts.handlers[event]) {
+                this.el.removeEventListener(event, this.opts.handlers[event]);
+            }
         },
     },
     each: {
@@ -36,6 +49,7 @@ const directices: {
             let el = this.el as object as IndexBoolean;
             el['sd-block'] = true;
             this.container = this.el.parentElement;
+            this.childSeed = [];
             this.container.removeChild(this.el);
         },
         update(this: Directive, collection: object[]) {
@@ -49,8 +63,10 @@ const directices: {
             let options: SeedOption = {
                 prefix: new RegExp(`^${this.opts.arg}\\.`),
                 parent: this.seed,
+                eachIndex: index,
             };
             let childSeed = new Seed(node, data, options);
+            this.childSeed.push(childSeed);
             this.container.appendChild(node);
             collection[index] = childSeed.scope;
             return childSeed;
@@ -58,6 +74,33 @@ const directices: {
         mutate(mutation: Record<string, object>) {
             // TODO
             console.log(mutation);
+        },
+        destory(this: Directive) {
+            this.childSeed && this.childSeed.forEach(child => {
+                child.destroy();
+            });
+        },
+    },
+    checked: {
+        created(this: Directive) {
+            let event = 'change';
+            if (this.opts.handlers[event]) {
+                this.el.removeEventListener(event, this.opts.handlers[event]);
+            }
+
+            let proxy = (): void => {
+                this.seed.scope[this.opts.key] = (this.el as HTMLInputElement).checked;
+            };
+            this.el.addEventListener(event, proxy);
+            this.opts.handlers[event] = proxy;
+
+        },
+        update(this: Directive, value: boolean) {
+            (this.el as HTMLInputElement).checked = value;
+        },
+        destory(this: Directive) {
+            let event = 'change';
+            this.el.removeEventListener(event, this.opts.handlers[event]);
         },
     },
 };

@@ -21,6 +21,7 @@ interface UpdateType {
     created?: Function;
     buildItem?: Function;
     mutate?: Function;
+    destory?: Function;
 }
 
 interface AttrType {
@@ -30,4 +31,20 @@ interface AttrType {
 interface SeedOption {
     prefix?: RegExp;
     parent?: import('./index').default;
+    eachIndex?: number;
+}
+
+interface IndexValue {
+    [prop: string]: ValueType;
+}
+
+interface EventWrap {
+    el: EventTarget;
+    event: Event;
+    directive: import('./directive/index').default;
+    seed: import('./index').default;
+
+}
+interface EventHandler {
+    (event: EventWrap): void;
 }

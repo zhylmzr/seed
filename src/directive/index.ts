@@ -4,12 +4,12 @@ import Utils from "./utils";
 import Filter from "../filter/index";
 
 interface DirectiveOptions {
-    readonly attr: { name: string; value: string };
-    readonly name: string;
-    readonly arg: string;
-    readonly key: string;
-    readonly def: Function | UpdateType;
-    readonly filters: Filter[];
+    attr: { name: string; value: string };
+    name: string;
+    arg: string;
+    key: string;
+    def: Function | UpdateType;
+    filters: Filter[];
     handlers: Record<string, EventListener>;
 }
 

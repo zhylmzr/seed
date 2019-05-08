@@ -14,12 +14,12 @@ interface BindingType {
 class Seed {
     private root: HTMLElement;
 
-    public scope: IndexObject;
+    public scope: IndexValue;
     private binding: Record<string, BindingType>;
     private options: SeedOption;
-    private _initCopy: IndexObject
+    private _initCopy: IndexValue
 
-    public constructor(el: string | HTMLElement, initData: IndexObject, options: SeedOption = {}) {
+    public constructor(el: string | HTMLElement, initData: IndexValue, options: SeedOption = {}) {
         if (!(this instanceof Seed)) {
             throw new Error("please use new keyword");
         }
@@ -70,9 +70,9 @@ class Seed {
     }
 
     private compileNode(node: HTMLElement, root?: boolean): void {
-        if (node.nodeType === 3) { // text node
+        if (node.nodeType === Node.TEXT_NODE) { // text node
             this.compileTextNode(node);
-        } else {
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
             let eachExp = node.getAttribute(EACH_ATTR),
                 ctrlExp = node.getAttribute(CTRL_ATTR);
 
@@ -128,7 +128,7 @@ class Seed {
             self: Seed = this;
 
         if (isEachKey) {
-            key = key.replace(eachPrefix, '');
+            key = dir.opts.key = key.replace(eachPrefix, '');
         } else if (eachPrefix) {
             self = this.options.parent;
         }
@@ -165,6 +165,19 @@ class Seed {
             },
         });
         return binding;
+    }
+
+    public destroy(): void {
+        for (let key in this.binding) {
+            this.binding[key].directives.forEach((dir: Directive) => {
+                let def = dir.opts.def as UpdateType;
+                if (def.destory) {
+                    def.destory.call(dir);
+                }
+            });
+            delete this.binding[key];
+        }
+        this.root.parentNode.removeChild(this.root);
     }
 
     public static filter(name: string, func: FilterType): void {
