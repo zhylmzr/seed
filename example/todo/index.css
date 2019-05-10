@@ -1,0 +1,24 @@
+#app.all .footer .all,
+#app.remaining .footer .remaining,
+#app.completed .footer .completed {
+  border-color: rgba(175, 47, 47, 0.2);
+}
+
+#app.remaining .main .todo.completed {
+  display: none;
+}
+
+#app.completed .main .todo:not(.completed) {
+  display: none;
+}
+
+.filters a {
+  cursor: pointer;
+}
+
+.main .view.hide {
+  display: none;
+}
+.main .view.hide+input {
+  display: block;
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Todo</title>
+    <link rel="stylesheet" href="todomvc.css">
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <section class="todoapp all" id="app">
+			<header class="header">
+				<h1>todos</h1>
+				<input class="new-todo" sd-on="change:addTodo" placeholder="What needs to be done?" autofocus>
+			</header>
+			<section class="main">
+				<input id="toggle-all" class="toggle-all" type="checkbox">
+				<label for="toggle-all" sd-on="click:markAll">Mark all as complete</label>
+				<ul class="todo-list">
+					<li sd-each="todo:todos" class="todo" sd-class="completed:todo.done">
+						<div class="view" sd-class="hide:todo.hide">
+							<input class="toggle" type="checkbox" sd-checked="todo.done" sd-on="change:toggleTodo">
+							<label sd-text="todo.title" sd-on="dblclick:editTodo"></label>
+							<button class="destroy" sd-on="click:removeTodo"></button>
+						</div>
+						<input class="edit" sd-value="todo.title" sd-on="blur:saveTodo">
+					</li>
+				</ul>
+			</section>
+			<footer class="footer">
+				<span class="todo-count"><strong sd-text="remaining"></strong> item left</span>
+				<ul class="filters">
+					<li><a class="all" sd-on="click:filter">All</a></li>
+					<li><a class="remaining" sd-on="click:filter">Active</a></li>
+					<li><a class="completed" sd-on="click:filter">Completed</a></li>
+				</ul>
+				<button class="clear-completed" sd-on="click:clearCompleted">Clear completed</button>
+			</footer>
+		</section>
+		<footer class="info">
+			<p>Double-click to edit a todo</p>
+			<p>Created by <a href="https://github.com/zhylmzr">zhylmzr</a></p>
+		</footer>
+    <script src="../../lib/index.min.js"></script>
+
+    <script src="index.js"></script>
+  </body>
+</html>
