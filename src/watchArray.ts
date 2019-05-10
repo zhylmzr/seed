@@ -3,11 +3,11 @@ const mutatorMethods = [
 ];
 const ArrayProto = Array.prototype as object as IndexFunction;
 
-export default (arr: Record<string, Function>, callback: Function) => {
-    mutatorMethods.forEach((method) => {
-        arr[method] = function() {
-            ArrayProto[method].apply(this, arguments);
-            callback({ event: method, args: ArrayProto.slice(arguments), array: arr});
+export default (arr: ValueType[], callback: (arg: MutationType) => void) => {
+    mutatorMethods.forEach(method => {
+        (arr as object as IndexObject)[method] = function(...args: ValueType[]) {
+            let result = ArrayProto[method].apply(this, args);
+            callback({ event: method, args, result});
         };
     });
 };

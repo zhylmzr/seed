@@ -2,6 +2,57 @@ import Directive from "./index";
 import Seed from "../index";
 import watchArray from '../watchArray';
 
+const reorder = function(this: Directive): void {
+    this.childSeed.forEach((seed: Seed, i) => {
+        seed.options.eachIndex = i;
+    });
+};
+
+const mutationHandlers: IndexFunction = {
+    push(this: Directive, mutate: MutationType) {
+        mutate.args.forEach((data, i) => {
+            let def = this.opts.def as UpdateType;
+            def.buildItem.call(this, data, this.childSeed.length + i);
+        });
+    },
+    pop(this: Directive, mutate: MutationType) {
+        (mutate.result as ScopeType).$seed.destroy();
+    },
+    unshift(this: Directive, mutate: MutationType) {
+        mutate.args.forEach((data, i) => {
+            let def = this.opts.def as UpdateType;
+            def.buildItem.call(this, data, this.childSeed.length + i);
+        });
+        reorder.call(this);
+    },
+    shift(this: Directive, mutate: MutationType) {
+        (mutate.result as ScopeType).$seed.destroy();
+        this.childSeed.shift();
+    },
+    splice(this: Directive, mutate: MutationType) {
+        let index = mutate.args[0] as number,
+            removed = mutate.args[1] as number,
+            added = mutate.args.length - 2 as number;
+
+        (mutate.result as ScopeType[]).forEach(r => {
+            r.$seed.destroy();
+        });
+
+        if (added > 0) {
+            mutate.args.slice(2).forEach((data, i) => {
+                let def = this.opts.def as UpdateType;
+                def.buildItem.call(this, data, index + i);
+            });
+        }
+        this.childSeed.splice(index, removed);
+        reorder.call(this);
+    },
+    sort(this: Directive, mutate: MutationType) {
+        // TODO
+        console.log(mutate);
+    },
+};
+
 const directices: {
     [key: string]: Function | UpdateType;
 } = {
@@ -59,28 +110,30 @@ const directices: {
             this.childSeed = [];
             this.container.removeChild(this.el);
         },
-        update(this: Directive, collection: object[]) {
+        update(this: Directive, collection: ValueType[]) {
             collection.forEach((item: Record<string, object>, i) => {
-                (this.opts.def as UpdateType).buildItem.bind(this)(item, i, collection);
+                (this.opts.def as UpdateType).buildItem.bind(this)(item, i);
             });
-            watchArray(collection as object as Record<string, Function>, (this.opts.def as UpdateType).mutate.bind(this));
+            watchArray(collection, (this.opts.def as UpdateType).mutate.bind(this));
         },
-        buildItem(this: Directive, data: Record<string, object>, index: number, collection: object[]): Seed {
+        buildItem(this: Directive, data: IndexValue, index: number): Seed {
             let node = this.el.cloneNode(true) as HTMLElement;
             let options: SeedOption = {
+                data,
                 prefix: new RegExp(`^${this.opts.arg}\\.`),
                 parent: this.seed,
                 eachIndex: index,
             };
-            let childSeed = new Seed(node, data, options);
+            let childSeed = new Seed(node, options);
             this.childSeed.push(childSeed);
             this.container.appendChild(node);
-            collection[index] = childSeed.scope;
+
             return childSeed;
         },
-        mutate(mutation: Record<string, object>) {
-            // TODO
-            console.log(mutation);
+        mutate(mutation: MutationType) {
+            if (mutationHandlers[mutation.event]) {
+                mutationHandlers[mutation.event].call(this, mutation);
+            }
         },
         destory(this: Directive) {
             this.childSeed && this.childSeed.forEach(child => {

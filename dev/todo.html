@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Document</title>
+    <title>Todo</title>
     <style>
     .done {
       text-decoration: line-through;
@@ -47,7 +47,7 @@
         <a class="completed" sd-on="click:filter">Show Completed</a>
       </div>
     </div>
-    <script src="./dist/index.js"></script>
+    <script src="../dist/index.js"></script>
 
     <script>
       Seed.filter('money', (value, param) => {
@@ -55,9 +55,10 @@
       })
 
       Seed.controller('TodoList', function(scope) {
-        scope.removeTodo = () => {
-          let i = this.options.eachIndex
+        scope.removeTodo = (e) => {
+          let i = e.seed.options.eachIndex
           scope.todos.splice(i, 1)
+          scope.remaining -= e.seed.scope.done ? 0 : 1
         }
         scope.toggleTodo = (e) => {
           scope.remaining += e.seed.scope.done ? -1 : 1
@@ -81,19 +82,23 @@
 
       let s = new Date()
       let app = new Seed('#app', {
-        cls: 'text',
-        remaining: todos.reduce((count, todo) => {
-          return count + (todo.done ? 0 : 1)
-        }, 0),
-        addTodo(e) {
-          let title = e.el.value
-          if (title) {
-            e.el.value = ''
-            this.scope.todos.push({ title, done: false })
-            this.scope.remaining++
-          }
+        data: {
+          todos,
+          cls: 'text',
+          remaining: todos.reduce((count, todo) => {
+            return count + (todo.done ? 0 : 1)
+          }, 0),
         },
-        todos
+        methods: {
+          addTodo(e) {
+            let title = e.el.value
+            if (title) {
+              e.el.value = ''
+              this.scope.todos.push({ title, done: false })
+              this.scope.remaining++
+            }
+          },
+        }
       })
       console.log(Date.now() - s + 'ms')
     </script>

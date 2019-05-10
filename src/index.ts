@@ -1,7 +1,7 @@
 import { PREFIX_MASK, VAR_RE, CTRL_ATTR, EACH_ATTR } from "./config";
 import Directive from "./directive/index";
 import Filter from './filter/index';
-import Controller from './controller';
+import { Controllers } from './config';
 
 const forEach = Array.prototype.forEach;
 const map = Array.prototype.map;
@@ -12,18 +12,18 @@ interface BindingType {
 }
 
 class Seed {
+    public scope: ScopeType;
+    public options: SeedOption;
+
     private root: HTMLElement;
-
-    public scope: IndexValue;
     private binding: Record<string, BindingType>;
-    private options: SeedOption;
-    private _initCopy: IndexValue
+    private _initCopy: ScopeType
 
-    public constructor(el: string | HTMLElement, initData: IndexValue, options: SeedOption = {}) {
+    public constructor(el: string | HTMLElement, options: SeedOption = {}) {
         if (!(this instanceof Seed)) {
             throw new Error("please use new keyword");
         }
-        this.scope = initData;
+        this.scope = Object.assign(options.data, options.methods);
         this.binding = {};
         this.options = options;
         if (typeof el === 'string') {
@@ -44,12 +44,15 @@ class Seed {
         let controller: Function;
 
         if (ctrlExp) {
-            controller = Controller[ctrlExp];
+            controller = Controllers[ctrlExp];
             this.root.removeAttribute(CTRL_ATTR);
             if (!controller) throw new Error(`controller ${ctrlExp} isn't defined.`);
         }
 
-        this._initCopy = Object.assign({}, initData);
+        this._initCopy = Object.assign({}, this.scope);
+
+        this.scope.$seed = this;
+
         // process node and directives
         this.compileNode(this.root, true);
 
@@ -102,6 +105,7 @@ class Seed {
                 });
             } else if (ctrlExp || !root) { // nested controller
                 // TODO
+                console.log('嵌套', node);
             }
 
             // avoid repeat compile children
@@ -141,6 +145,9 @@ class Seed {
         if (def.created) {
             def.created.call(dir, binding.value);
         }
+
+        // init directive
+        binding.value && def.update.call(dir, binding.value);
     }
 
     private createBinding(variable: string): BindingType {
@@ -193,7 +200,22 @@ class Seed {
     }
 
     public static controller(id: string, ext: Function): void {
-        Controller[id] = ext;
+        Controllers[id] = ext;
+    }
+
+    public static bootstrap(): object {
+        let el: HTMLElement,
+            seed: Seed,
+            app: IndexObject = {},
+            count = 0;
+        while(el = document.querySelector(`[${CTRL_ATTR}]`)) {
+            seed = new Seed(el);
+            if (el.id) {
+                app[`$${el.id}`] = seed;
+            }
+            count++;
+        }
+        return count > 1 ? app : seed;
     }
 }
 

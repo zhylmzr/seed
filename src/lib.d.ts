@@ -32,6 +32,8 @@ interface SeedOption {
     prefix?: RegExp;
     parent?: import('./index').default;
     eachIndex?: number;
+    data?: IndexValue;
+    methods?: IndexFunction;
 }
 
 interface IndexValue {
@@ -47,4 +49,15 @@ interface EventWrap {
 }
 interface EventHandler {
     (event: EventWrap): void;
+}
+
+interface MutationType {
+    event: string;
+    args: ValueType[];
+    result: ValueType[] | ValueType;
+}
+
+interface ScopeType {
+    $seed?: import('./index').default;
+    [prop: string]: ValueType;
 }

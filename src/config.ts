@@ -8,6 +8,8 @@ const KEY_RE = /^[^\|]+/;
 const FILTER__RE = /[^\|]+/g;
 const FILTER_ARG_RE = /[^\s]+/g;
 
+let Controllers: IndexFunction = {};
+
 export {
     PREFIX_MASK,
     VAR_RE,
@@ -17,4 +19,5 @@ export {
     CTRL_ATTR,
     EACH_ATTR,
     ARG_RE,
+    Controllers,
 };
