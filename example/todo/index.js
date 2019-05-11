@@ -47,7 +47,9 @@ let app = new Seed('#app', {
                 return flag && e.done
             }, true)
             this.scope.todos.forEach(todo => {
+                let old = todo.done
                 todo.done = !mark
+                this.scope.remaining += old !== todo.done ? (todo.done  ? -1 : 1) : 0
             })
         },
         clearCompleted() {
